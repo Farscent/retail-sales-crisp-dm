@@ -1,14 +1,12 @@
-[![Tests](https://github.com/Farscent/retail-sales-crisp-dm/actions/workflows/tests.yml/badge.svg)](https://github.com/Farscent/retail-sales-crisp-dm/actions/workflows/tests.yml)
-
 # Retail Sales Analysis with CRISP-DM
 
-A beginner data analysis project about a fictional shop. The aim is to turn a small, messy CSV file into a clear sales report using Python and pandas.
+[![Tests](https://github.com/Farscent/retail-sales-crisp-dm/actions/workflows/tests.yml/badge.svg)](https://github.com/Farscent/retail-sales-crisp-dm/actions/workflows/tests.yml)
 
-**Research question:** Which product categories contribute the most revenue, and how does revenue change over time?
+A reproducible sales reporting pipeline that cleans transaction data, calculates revenue, and summarizes performance by product category and month. The analysis follows CRISP-DM and records data-quality decisions in an audit.
 
-## Example results
+## Results
 
-![Sales overview from the included synthetic data](docs/overview.png)
+![Revenue by category and month](docs/overview.png)
 
 | Measure | Result |
 |---|---:|
@@ -17,48 +15,40 @@ A beginner data analysis project about a fictional shop. The aim is to turn a sm
 | Average transaction value | IDR 44,036.93 |
 | Largest category by revenue | Drinks |
 
-These are verified outputs from the bundled fictional dataset, not real business findings. [Read the generated example report](docs/example-report.md).
+Results are calculated from the included **synthetic dataset**. [View the example report](docs/example-report.md).
 
-## Learning objectives
+## Methodology
 
-- Inspect a dataset before calculating results.
-- Handle duplicates, missing values, invalid dates, and invalid numbers.
-- Use pandas filtering, grouping, and date operations.
-- Calculate revenue and average transaction value.
-- Explain findings and limitations using the CRISP-DM process.
+| CRISP-DM phase | Implementation |
+|---|---|
+| Business understanding | Define category contribution and monthly revenue as the reporting questions. |
+| Data understanding | Inspect data types, missing values, duplicates, and invalid records. |
+| Data preparation | Remove exact duplicates and invalid transactions; normalize labels; retain missing categories as Unknown. |
+| Modeling | Aggregate revenue by category and month using descriptive analysis. |
+| Evaluation | Reconcile grouped totals with overall revenue and review the cleaning audit. |
+| Deployment | Export cleaned data, summary tables, a report, and charts through a reusable script. |
+
+Revenue is calculated as quantity × unit price × (1 − discount). Average transaction value is total revenue divided by the number of valid transactions.
+
+Cleaning removes one exact duplicate and four invalid rows from 181 input rows. A missing category is retained as Unknown. Conflicting transaction IDs stop the analysis rather than being silently combined.
 
 ## Dataset
 
-The included [sales.csv](data/sales.csv) is **synthetic**. It contains 180 fictional transactions from January to June 2025 and one deliberately repeated row. No customer information or real business records are used.
+[sales.csv](data/sales.csv) contains 180 fictional transactions from January to June 2025 and one repeated row. [make_demo_data.py](make_demo_data.py) reproduces the data and its documented quality issues.
 
-| Column | Meaning |
+| Field | Description |
 |---|---|
-| transaction_id | Unique identifier; each row represents one complete transaction |
-| date | Transaction date, in YYYY-MM-DD format |
-| category | Stationery, Drinks, Snacks, or an unknown category |
+| transaction_id | Unique transaction identifier; one row per complete transaction |
+| date | Transaction date in YYYY-MM-DD format |
+| category | Product category |
 | branch | Campus or City |
 | quantity | Positive whole number of items |
-| unit_price | Price per item in Indonesian rupiah (IDR) |
-| discount | Fraction between 0 and 1; 0.10 means 10% |
+| unit_price | Price per item in IDR |
+| discount | Fraction from 0 to 1; 0.10 represents 10% |
 
-The [generator](make_demo_data.py) deliberately adds one missing category, one missing quantity, one invalid date, one invalid discount, one negative quantity, inconsistent category spacing, and one exact duplicate.
+## Installation and usage
 
-## Method: the six CRISP-DM phases
-
-| Phase | Application in this project |
-|---|---|
-| 1. Business understanding | Define category revenue and monthly revenue as the questions of interest. |
-| 2. Data understanding | Inspect row counts, column types, missing values, and unusual records. |
-| 3. Data preparation | Remove exact duplicates; reject invalid transactions; label a missing category as Unknown. |
-| 4. Modeling | Use descriptive aggregation rather than a predictive model. A forecasting model is unnecessary for these questions. |
-| 5. Evaluation | Check that grouped totals equal overall revenue and review the effect of removed rows. |
-| 6. Deployment | Export a reusable report, clean data, tables, and a chart through a command-line script. |
-
-CRISP-DM is iterative: unexpected findings can send the analyst back to the data preparation stage. Here, “deployment” means delivering a repeatable report, not hosting a web application.
-
-## Run the project
-
-Use **Python 3.11, 3.12, or 3.13**. Clone the project and create an environment:
+Requires **Python 3.11–3.13**.
 
 ~~~bash
 git clone https://github.com/Farscent/retail-sales-crisp-dm.git
@@ -66,98 +56,64 @@ cd retail-sales-crisp-dm
 python -m venv .venv
 ~~~
 
-Activate the environment:
-
-~~~powershell
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
-~~~
-
-~~~bash
-# macOS / Linux
-source .venv/bin/activate
-~~~
-
-Then run:
+Activate the environment with <code>.\.venv\Scripts\Activate.ps1</code> on Windows PowerShell or <code>source .venv/bin/activate</code> on macOS/Linux.
 
 ~~~bash
 python -m pip install -r requirements.txt
 python analysis.py
-python -m unittest discover -s tests -v
 ~~~
 
-If PowerShell blocks activation, use <code>.\.venv\Scripts\python.exe</code> instead of <code>python</code> in the commands above. Once dependencies are installed, no internet connection is needed.
+The included data runs offline after dependency installation.
 
-For your own file with the same schema:
+A CSV with the same schema can be supplied with <code>--input</code>; <code>--output</code> selects the destination directory.
 
 ~~~bash
 python analysis.py --input data/sales.csv --output outputs
 ~~~
 
-## Calculations and outputs
+## Outputs
 
-~~~text
-revenue = quantity × unit_price × (1 − discount)
-average transaction value = total revenue / valid transaction count
-~~~
-
-For example, one IDR 12,000 item with a 10% discount contributes **IDR 10,800** in revenue.
-
-The bundled data should produce **176 valid transactions**: 181 input rows, minus one exact duplicate and four invalid rows. The missing category is retained as Unknown.
-
-| Output | Purpose |
+| File | Contents |
 |---|---|
-| outputs/report.md | Short written findings |
-| outputs/summary.json | Cleaning counts and headline measures |
-| outputs/clean_sales.csv | Valid transactions and calculated revenue |
+| outputs/report.md | Written findings |
+| outputs/summary.json | Cleaning audit and headline measures |
+| outputs/clean_sales.csv | Valid transactions with calculated revenue |
 | outputs/revenue_by_category.csv | Category totals |
 | outputs/monthly_revenue.csv | Monthly totals |
-| outputs/sales_overview.png | Two charts for visual interpretation |
+| outputs/sales_overview.png | Category and monthly revenue charts |
 
-Open the generated report and chart after running the script. Generated results are ignored by Git so the source data remains the reference.
+Generated outputs are excluded from version control; representative results are included under docs.
 
-## How to interpret the analysis
+## Interpretation and limitations
 
-A category with the highest revenue is the largest contributor to sales value in this dataset. It is not necessarily the most profitable category because costs are unavailable.
+Drinks contributes the most revenue in the sample. Profitability cannot be assessed because product costs are unavailable.
 
-The audit makes cleaning decisions visible. Removing an invalid row reduces the reported total; in a real project, the preferred next step would be to correct that row using the original record. Conflicting transaction IDs cause an error rather than being merged silently.
+The dataset is fictional, and the final month is incomplete. Monthly totals therefore require caution when comparing periods. Excluding invalid records reduces reported revenue; real reporting would require checking those records against the source. The transaction-level denominator would also need adjustment for item-level order data.
 
-The data is synthetic and the final month is incomplete. Do not interpret its patterns as evidence about a real shop or compare partial and full months without adjusting the question. One row per complete transaction is a deliberate simplification; real item-level order data needs an order-level denominator.
+## Notebook
 
-## Read and extend the code
-
-Start with [walkthrough.ipynb](walkthrough.ipynb), then read <code>clean_sales()</code>, <code>summarize_sales()</code>, and <code>run()</code> in [analysis.py](analysis.py).
-
-Try these exercises:
-
-1. Add a revenue summary by branch.
-2. Find the median transaction value and explain why it differs from the mean.
-3. Report the percentage of rows excluded during cleaning.
-4. Add product costs and distinguish revenue from gross profit.
-
-**Questions to be able to answer:** Why keep an Unknown category? Why not replace a missing quantity with zero? Why is a forecasting model unnecessary here?
-
-## References
-
-- [IBM: CRISP-DM overview](https://www.ibm.com/docs/en/spss-modeler/saas?topic=dm-crisp-help-overview)
-- [pandas documentation](https://pandas.pydata.org/docs/)
-
-This is a student learning project, with no institutional affiliation or endorsement.
-
-
-## Optional notebook
-
-From this project folder, install the notebook tools and open the walkthrough:
+[View the analysis notebook](walkthrough.ipynb) for intermediate tables, visualizations, and saved outputs. To run it locally:
 
 ~~~bash
 python -m pip install -r requirements-notebook.txt
 python -m notebook walkthrough.ipynb
 ~~~
 
-Choose the project's Python environment and use **Run All**. The notebook imports the same tested functions as the script and adds explanations and intermediate tables.
+## Validation
 
-## Validation and license
+Tests cover cleaning counts, revenue calculations, total reconciliation, invalid inputs, conflicting IDs, and report generation. CI also verifies dataset reproducibility and executes the notebook.
 
-The project has been tested locally on Windows with Python 3.13. GitHub Actions checks Python 3.11 and 3.12; see the status badge at the top for the current result. The analysis notebooks include saved example outputs and can be rerun from top to bottom.
+~~~bash
+python -m unittest discover -s tests -v
+~~~
 
-Code and the synthetic demonstration data are available under the [MIT License](LICENSE).
+GitHub Actions runs the checks on Python 3.11 and 3.12. The project has also been verified on Windows with Python 3.13.
+
+## References
+
+- [IBM: CRISP-DM overview](https://www.ibm.com/docs/en/spss-modeler/saas?topic=dm-crisp-help-overview)
+- [pandas documentation](https://pandas.pydata.org/docs/)
+
+## License
+
+Code and synthetic demonstration data are available under the [MIT License](LICENSE).
