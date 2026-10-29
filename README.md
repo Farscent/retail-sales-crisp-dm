@@ -1,7 +1,5 @@
 # Retail Sales Analysis with CRISP-DM
 
-[![Tests](https://github.com/Farscent/retail-sales-crisp-dm/actions/workflows/tests.yml/badge.svg)](https://github.com/Farscent/retail-sales-crisp-dm/actions/workflows/tests.yml)
-
 A reproducible sales reporting pipeline that cleans transaction data, calculates revenue, and summarizes performance by product category and month. The analysis follows CRISP-DM and records data-quality decisions in an audit.
 
 ## Results
